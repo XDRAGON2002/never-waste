@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/router";
 import axios from "axios"
 import { auth, db } from "../firebase/clientApp"
@@ -21,6 +21,7 @@ const AddPost = () => {
     const [image, setImage] = useState(null)
     const [isText, setIsText] = useState(true)
     const router = useRouter()
+    const ref = useRef()
 
     const handleItemInput = (e) => {
         setItemInput(e.target.value)
@@ -47,15 +48,23 @@ const AddPost = () => {
     }
 
     const addItem = async() => {
-        if (isText) {
+        if (isText && itemInput.length > 0) {
             setItems([...items, itemInput])
             setItemInput("")
-        }else {
+        }else if (!isText && image) {
             const form_data = new FormData()
             form_data.append("file", image, image.name)
             await axios.post("http://localhost:8000/api/", form_data)
             .then(res => res.data)
-            .then(res => setItems([...items, res.prediction]))
+            .then(res => {
+                if (!res.err) {
+                    setItems([...items, res.prediction])
+                }else {
+                    window.alert(`ERROR: ${res.err}`)
+                }
+            })
+            setImage(null)
+            ref.current.value = ""
         }
     }
 
@@ -65,32 +74,42 @@ const AddPost = () => {
     }
 
     const handleSubmit = async() => {
-        const data = {
-            uid: user.uid,
-            name: user.displayName,
-            email: user.email,
-            contact: contact,
-            address: address,
-            items: items,
-            isClaimed: false,
-            cid: "",
-            claimerName: "",
-            claimerEmail: "",
-            claimerContact: "",
-            latitude: latitude,
-            longitude: longitude
+        if (items.length < 1) {
+            window.alert("ERROR: Please Recheck Items List")
+        }else if (isNaN(feedCount) || feedCount.length < 1 || feedCount === "0" || feedCount.includes("-")) {
+            window.alert("ERROR: Please Recheck Feed People Count")
+        }else if (isNaN(contact) || contact.length !== 10) {
+            window.alert("ERROR: Please Recheck Contact Number")
+        }else if (address.length < 1) {
+            window.alert("ERROR: Please Recheck Address")
+        }else {
+            const data = {
+                uid: user.uid,
+                name: user.displayName,
+                email: user.email,
+                contact: contact,
+                address: address,
+                items: items,
+                isClaimed: false,
+                cid: "",
+                claimerName: "",
+                claimerEmail: "",
+                claimerContact: "",
+                latitude: latitude,
+                longitude: longitude
+            }
+            for (let count = 0;count < feedCount;count++) {
+                await addDoc(collection(db, "foodPosts"), data)
+            }
+            setItemInput("")
+            setItems([])
+            setContact("")
+            setAddress("")
+            setFeedCount(0)
+            setLatitude(0)
+            setLongitude(0)
+            router.push("/foodposts")
         }
-        for (let count = 0;count < feedCount;count++) {
-            await addDoc(collection(db, "foodPosts"), data)
-        }
-        setItemInput("")
-        setItems([])
-        setContact("")
-        setAddress("")
-        setFeedCount(0)
-        setLatitude(0)
-        setLongitude(0)
-        router.push("/foodposts")
     }
 
     useEffect(() => {
@@ -106,7 +125,7 @@ const AddPost = () => {
             <Heading m={4} color="teal.700"><StarIcon w={5} h={5}/> Item</Heading>
             <Button onClick={handleInputMethod} bg="teal.500" size="lg" borderRadius="50%" w={70} h={70} boxShadow="lg" m={4}><SpinnerIcon w={30} h={30} color="white"/></Button>
             {isText && <Input type="text" onChange={handleItemInput} value={itemInput} placeholder="Item" m={4} fontSize="xl" color="teal.700"></Input>}
-            {!isText && <Input type="file" accept="image/png, image/jpg" onChange={handleImageInput} m={4} fontSize="xl" color="teal.700"></Input>}
+            {!isText && <Input type="file" accept="image/jpg, image/jpeg, image/png" onChange={handleImageInput} ref={ref} m={4} fontSize="xl" color="teal.700"></Input>}
             <Button onClick={addItem} bg="teal.500" size="lg" borderRadius="50%" w={70} h={70} boxShadow="lg" m={4}><AddIcon w={30} h={30} color="white"/></Button>
             {items.length > 0 && <Heading m={4} color="teal.700"><QuestionOutlineIcon w={5} h={5}/> Item List</Heading>}
             {items.map((item, idx) => {
