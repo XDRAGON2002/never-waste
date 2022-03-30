@@ -4,9 +4,10 @@ import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 
 import { Heading, Text, Input, Button } from "@chakra-ui/react";
-import { StarIcon, AtSignIcon, PhoneIcon, ChevronRightIcon, BellIcon, ArrowUpIcon, ArrowRightIcon, QuestionOutlineIcon, DeleteIcon } from "@chakra-ui/icons"
+import { StarIcon, AtSignIcon, PhoneIcon, ChevronRightIcon, ViewIcon, BellIcon, ArrowUpIcon, ArrowRightIcon, QuestionOutlineIcon, DeleteIcon } from "@chakra-ui/icons"
 
 import { auth, db } from "../../../firebase/clientApp"
+import getDistance from "../../../utils/distance"
 
 const PostDetails = () => {
 
@@ -15,6 +16,9 @@ const PostDetails = () => {
     const [item, setItem] = useState({})
     const [claimerContact, setClaimerContact] = useState("")
     const [user, loading, error] = useAuthState(auth)
+    const [latitude, setLatitude] = useState(0)
+    const [longitude, setLongitude] = useState(0)
+    const [distance, setDistance] = useState(0)
 
     const handleClaim = async() => {
         const data = {
@@ -42,6 +46,11 @@ const PostDetails = () => {
         const foodDoc = doc(db, "foodPosts", id)
         const foodPost = await getDoc(foodDoc)
         setItem(foodPost.data())
+        navigator.geolocation.getCurrentPosition((position) => {
+            setLatitude(position.coords.latitude)
+            setLongitude(position.coords.longitude)
+            setDistance(getDistance(foodPost.data().latitude, foodPost.data().longitude, latitude, longitude))
+        })
     }, [])
 
     return (
@@ -51,8 +60,8 @@ const PostDetails = () => {
             <Heading color="teal.500" m={4}><StarIcon w={5} h={5} color="teal.700"/> {item.name}</Heading>
             <Heading color="teal.500" m={4}><AtSignIcon w={5} h={5} color="teal.700"/> {item.email}</Heading>
             <Heading color="teal.500" m={4}><PhoneIcon w={5} h={5} color="teal.700"/> {item.contact}</Heading>
-            <Heading color="teal.500" m={4}>{item.feedCount}</Heading>
             <Heading color="teal.500" m={4}><ArrowRightIcon w={5} h={5} color="teal.700"/> {item.address}</Heading>
+            <Heading color="teal.500" m={4}><ViewIcon w={5} h={5} color="teal.700"/> {distance} Km</Heading>
             {item.isClaimed && <Heading color="teal.700" size="2xl" m={4}>Claimer Details</Heading>}
             {item.isClaimed && <Heading color="teal.500" m={4}><StarIcon w={5} h={5} color="teal.700"/> {item.claimerName}</Heading>}
             {item.isClaimed && <Heading color="teal.500" m={4}><AtSignIcon w={5} h={5} color="teal.700"/> {item.claimerEmail}</Heading>}
