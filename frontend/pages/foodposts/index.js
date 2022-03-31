@@ -19,7 +19,7 @@ const FoodPosts = () => {
 
     return (
         <div>
-            <Heading color="teal.700" size="4xl" m={4}>All Posts</Heading>
+            <Heading color="teal.700" size="4xl" m={4}>Available Posts</Heading>
             {<FoodList foodPosts={foodPosts.docs}/>}
             <Link href="/addpost">
                 <Button bg="teal.500" size="lg" borderRadius="50%" w={70} h={70} boxShadow="lg"><PlusSquareIcon w={30} h={30} color="white"/></Button>

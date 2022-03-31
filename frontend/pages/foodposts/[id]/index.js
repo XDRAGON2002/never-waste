@@ -21,16 +21,21 @@ const PostDetails = () => {
     const [distance, setDistance] = useState(0)
 
     const handleClaim = async() => {
-        const data = {
-            isClaimed: true,
-            cid: user.uid,
-            claimerName: user.displayName,
-            claimerEmail: user.email,
-            claimerContact: claimerContact,
+        if (isNaN(claimerContact) || claimerContact.length !== 10) {
+            window.alert("ERROR: Please Recheck Claimer Contact Number")
+        }else {
+            const data = {
+                isClaimed: true,
+                cid: user.uid,
+                claimerName: user.displayName,
+                claimerEmail: user.email,
+                claimerContact: claimerContact,
+            }
+            const foodDoc = doc(db, "foodPosts", id)
+            await updateDoc(foodDoc, data)
+            setClaimerContact("")
+            router.push("/claimedposts")
         }
-        const foodDoc = doc(db, "foodPosts", id)
-        await updateDoc(foodDoc, data)
-        setClaimerContact("")
     }
 
     const handleClaimerContact = (e) => {

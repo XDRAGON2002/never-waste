@@ -25,7 +25,7 @@ const NavBar = () => {
                         <div>
                             <Link href="/foodposts">
                                 <UILink onClick={onClose} color="white">
-                                    <ChevronRightIcon /> All Posts
+                                    <ChevronRightIcon /> Available Posts
                                 </UILink>
                             </Link>
                         </div>
